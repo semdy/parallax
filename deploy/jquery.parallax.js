@@ -36,6 +36,18 @@
  *              driving the motion from the gyroscope output of a smartdevice.
  *              If no gyroscope is available, the cursor position is used.
  */
+
+if( typeof Function.prototype.bind !== 'function' ){
+  Function.prototype.bind = function(){
+    var self = this,
+        context = [].shift.call(arguments),
+        args = [].slice.call(arguments);
+    return function(){
+      return self.apply(context, [].concat.call(args, [].slice.call(arguments)));
+    }
+  };
+}
+
 ;(function($, window, document, undefined) {
 
   // Strict Mode
@@ -256,8 +268,8 @@
   };
 
   Plugin.prototype.updateDimensions = function() {
-    this.ww = window.innerWidth;
-    this.wh = window.innerHeight;
+    this.ww = window.innerWidth || document.documentElement.clientWidth;
+    this.wh = window.innerHeight || document.documentElement.clientHeight;
     this.wcx = this.ww * this.originX;
     this.wcy = this.wh * this.originY;
     this.wrx = Math.max(this.wcx, this.ww - this.wcx);
@@ -268,8 +280,8 @@
     this.bounds = this.element.getBoundingClientRect();
     this.ex = this.bounds.left;
     this.ey = this.bounds.top;
-    this.ew = this.bounds.width;
-    this.eh = this.bounds.height;
+    this.ew = this.bounds.width||this.element.offsetWidth;
+    this.eh = this.bounds.height||this.element.offsetHeight;
     this.ecx = this.ew * this.originX;
     this.ecy = this.eh * this.originY;
     this.erx = Math.max(this.ecx, this.ew - this.ecx);
@@ -292,9 +304,17 @@
         this.cx = 0;
         this.cy = 0;
         this.portrait = false;
-        window.addEventListener('mousemove', this.onMouseMove);
+        if( window.addEventListener ) {
+          window.addEventListener('mousemove', this.onMouseMove);
+        } else {
+          document.attachEvent('onmousemove', this.onMouseMove);
+        }
       }
-      window.addEventListener('resize', this.onWindowResize);
+      if( window.addEventListener ) {
+        window.addEventListener('resize', this.onWindowResize);
+      } else {
+        window.attachEvent('onresize', this.onWindowResize);
+      }
       this.raf = requestAnimationFrame(this.onAnimationFrame);
     }
   };
@@ -471,7 +491,6 @@
   };
 
   Plugin.prototype.onMouseMove = function(event) {
-
     // Cache mouse coordinates.
     var clientX = event.clientX;
     var clientY = event.clientY;
